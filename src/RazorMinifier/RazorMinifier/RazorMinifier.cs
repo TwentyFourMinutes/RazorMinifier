@@ -23,6 +23,8 @@ namespace RazorMinifier.VSIX
 	public sealed class RazorMinifier : AsyncPackage
 	{
 		public const string PackageGuidString = "f4ac4e92-8fc5-47de-80b0-2d35594bc824";
+		public const string ConfigName = "Rminify.json";
+		public const string BuildAction = "BuildAction";
 
 		public RazorMinifier()
 		{
@@ -67,7 +69,7 @@ namespace RazorMinifier.VSIX
 					var minifyFile = items.FirstOrDefault(x =>
 					{
 						ThreadHelper.ThrowIfNotOnUIThread();
-						return x.Name == "Rminify.json";
+						return x.Name == ConfigName;
 					});
 
 					SetProjectItemBuildAction(minifyFile);
@@ -110,7 +112,7 @@ namespace RazorMinifier.VSIX
 				var match = false;
 				try
 				{
-					match = x.Name == "BuildAction";
+					match = x.Name == BuildAction;
 				}
 				catch { }
 
