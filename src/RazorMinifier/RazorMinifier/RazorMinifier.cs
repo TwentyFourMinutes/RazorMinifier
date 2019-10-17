@@ -84,7 +84,10 @@ namespace RazorMinifier.VSIX
 				}
 
 				Config = JsonConvert.DeserializeObject<Config>(configString);
-				FileHandler = new FileHandler(Config, configPath, project.FullName);
+
+				var configHandler = new ConfigHandler(Config, configPath, Path.GetDirectoryName(project.FullName));
+
+				FileHandler = new FileHandler(configHandler);
 
 				EnsureFileHandlerBuildActions();
 			}

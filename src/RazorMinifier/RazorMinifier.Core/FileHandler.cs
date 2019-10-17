@@ -11,20 +11,24 @@ namespace RazorMinifier.Core
 	public class FileHandler : IDisposable
 	{
 		public bool IsDisposed { get; private set; }
-		private readonly Config _config;
 		private readonly List<RazorFileWatcher> _watchers;
+		private readonly ConfigHandler _configHandler;
 
-		public FileHandler(Config config, string configPath, string rootDirectory)
+		private Config _config
 		{
-			_config = config;
-			_config.RootDirectory = Path.GetDirectoryName(rootDirectory);
-			_config.ConfigPath = configPath;
+			get => _configHandler.Config;
+		}
+
+		public FileHandler(ConfigHandler configHandler)
+		{
+			_configHandler = configHandler;
 
 			_watchers = new List<RazorFileWatcher>();
 
+			_configHandler.ConfigUpdated += ConfigUpdated;
+
 			Init();
 		}
-
 		private async void Init()
 		{
 			try
@@ -37,17 +41,42 @@ namespace RazorMinifier.Core
 			catch { }
 		}
 
-		private async Task AddFileToWatchers(MinifiedRazorFile file)
+		private async Task ConfigUpdated(List<MinifiedRazorFile> toRemove, List<MinifiedRazorFile> toAdd)
+		{
+			foreach (var file in toRemove)
+			{
+				var remove = _watchers.FirstOrDefault(x => x.File.EditFilePath == file.EditFilePath && x.File.SourceFilePath == file.SourceFilePath);
+
+				_watchers.Remove(remove);
+			}
+
+			foreach (var file in toAdd)
+			{
+				await AddFileToWatchers(file);
+			}
+		}
+
+		private async Task<bool> AddFileToWatchers(MinifiedRazorFile file)
 		{
 			file.FullSourceFilePath = GetFullPathFromRootDir(file.SourceFilePath);
 
-			if (!File.Exists(file.FullEditFilePath))
+			if (!File.Exists(file.FullSourceFilePath))
+			{
+				return false;
+			}
+
+			if (string.IsNullOrWhiteSpace(file.EditFilePath))
 			{
 				await CreateEditFileWithContent(file);
 			}
 			else
 			{
 				file.FullEditFilePath = GetFullPathFromRootDir(file.EditFilePath);
+
+				if (!File.Exists(file.FullEditFilePath))
+				{
+					await CreateEditFileWithContent(file);
+				}
 			}
 
 			var watcher = new RazorFileWatcher(file);
@@ -55,6 +84,9 @@ namespace RazorMinifier.Core
 			watcher.FileUpdated += FileUpdated;
 
 			_watchers.Add(watcher);
+			_config.Files.Add(file);
+
+			return true;
 		}
 
 		private string GetFullPathFromRootDir(string relativePath)
@@ -79,8 +111,13 @@ namespace RazorMinifier.Core
 
 		public async Task AddToConfigFile(MinifiedRazorFile file)
 		{
-			await AddFileToWatchers(file);
-			_config.Files.Add(file);
+			if (_config.Files.Any(x => x.EditFilePath == file.EditFilePath && x.SourceFilePath == file.SourceFilePath))
+				return;
+
+			var result = await AddFileToWatchers(file);
+
+			if (!result)
+				return;
 
 			using (var sw = new StreamWriter(_config.ConfigPath, false))
 			{
@@ -130,6 +167,9 @@ namespace RazorMinifier.Core
 
 					watcher.Dispose();
 				}
+
+				_configHandler.Dispose();
+
 				IsDisposed = true;
 			}
 		}

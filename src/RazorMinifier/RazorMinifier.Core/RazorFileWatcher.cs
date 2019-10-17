@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 
 namespace RazorMinifier.Core
 {
-	public class RazorFileWatcher : FileSystemWatcher, IDisposable
+	internal class RazorFileWatcher : FileSystemWatcher, IDisposable
 	{
 		public readonly MinifiedRazorFile File;
 		public event Func<RazorFileWatcher, Task> FileUpdated;
