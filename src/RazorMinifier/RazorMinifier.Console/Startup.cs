@@ -15,7 +15,9 @@ namespace RazorMinifier.Console
 
 			var config = JsonConvert.DeserializeObject<Config>(content);
 
-			var fh = new FileHandler(config, Environment.CurrentDirectory.Replace(@"\bin\Debug", string.Empty));
+			var currentDir = Environment.CurrentDirectory.Replace(@"\bin\Debug", string.Empty);
+
+			var fh = new FileHandler(config, Path.GetFullPath("Rminify.json", currentDir), currentDir);
 
 			System.Console.WriteLine("ready");
 
