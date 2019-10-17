@@ -20,8 +20,15 @@ namespace RazorMinifier.VSIX
 	[Guid(RazorMinifier.PackageGuidString)]
 	[SuppressMessage("StyleCop.CSharp.DocumentationRules", "SA1650:ElementDocumentationMustBeSpelledCorrectly", Justification = "pkgdef, VS and vsixmanifest are valid VS terms")]
 	[ProvideAutoLoad(VSConstants.UICONTEXT.SolutionExists_string, PackageAutoLoadFlags.BackgroundLoad)]
+	[ProvideMenuResource("Menus.ctmenu", 1)]
+	[ProvideUIContextRule(UiContextSupportedFiles,
+	name: "Supported Files",
+	expression: "DotCSharpHtml",
+	termNames: new[] { "DotCSharpHtml" },
+	termValues: new[] { "HierSingleSelectionName:.cshtml$" })]
 	public sealed class RazorMinifier : AsyncPackage
 	{
+		public const string UiContextSupportedFiles = "24551deb-f034-43e9-a279-0e541241687e";
 		public const string PackageGuidString = "f4ac4e92-8fc5-47de-80b0-2d35594bc824";
 		public const string ConfigName = "Rminify.json";
 		public const string BuildAction = "BuildAction";
@@ -51,55 +58,73 @@ namespace RazorMinifier.VSIX
 		{
 			await this.JoinableTaskFactory.SwitchToMainThreadAsync(cancellationToken);
 
-			var startupProjects = ((Array)DTE2.Solution.SolutionBuild.StartupProjects).Cast<string>();
-			var startupProject = startupProjects.FirstOrDefault();
+			var project = GetStartupProject();
 
-			if (startupProject != null)
+			if (project != null)
 			{
-				var projects = DTE2.Solution.Projects.Cast<Project>();
-				var project = projects.FirstOrDefault(x =>
+				var items = project.ProjectItems.Cast<ProjectItem>();
+				var minifyFile = items.FirstOrDefault(x =>
 				{
 					ThreadHelper.ThrowIfNotOnUIThread();
-					return x.UniqueName == startupProject;
+					return x.Name == ConfigName;
 				});
 
-				if (project != null)
+				SetProjectItemBuildAction(minifyFile);
+
+				var configPath = Path.Combine(Path.GetDirectoryName(project.FullName), minifyFile.Name);
+
+				if (!File.Exists(configPath))
+					return;
+
+				var configString = string.Empty;
+
+				using (var reader = new StreamReader(configPath))
 				{
-					var items = project.ProjectItems.Cast<ProjectItem>();
-					var minifyFile = items.FirstOrDefault(x =>
-					{
-						ThreadHelper.ThrowIfNotOnUIThread();
-						return x.Name == ConfigName;
-					});
-
-					SetProjectItemBuildAction(minifyFile);
-
-					var configPath = Path.Combine(Path.GetDirectoryName(project.FullName), minifyFile.Name);
-
-					if (!File.Exists(configPath))
-						return;
-
-					var configString = string.Empty;
-
-					using (var reader = new StreamReader(configPath))
-					{
-						configString = await reader.ReadToEndAsync();
-					}
-
-					Config = JsonConvert.DeserializeObject<Config>(configString);
-					FileHandler = new FileHandler(Config, project.FullName);
-					
-					foreach (var editFile in FileHandler.GetAllEditFiles())
-					{
-						var editProjectItem = DTE2.Solution.FindProjectItem(editFile);
-
-						SetProjectItemBuildAction(editProjectItem);
-					}
+					configString = await reader.ReadToEndAsync();
 				}
+
+				Config = JsonConvert.DeserializeObject<Config>(configString);
+				FileHandler = new FileHandler(Config, configPath, project.FullName);
+
+				EnsureFileHandlerBuildActions();
+			}
+
+			await AddToRazorMinifier.InitializeAsync(this);
+		}
+
+		public Project GetStartupProject()
+		{
+			ThreadHelper.ThrowIfNotOnUIThread();
+
+			var startupProjects = ((Array)DTE2.Solution.SolutionBuild.StartupProjects).Cast<string>();
+
+			var startupProjectPath = startupProjects.FirstOrDefault();
+
+			if (string.IsNullOrWhiteSpace(startupProjectPath))
+				return null;
+
+			var projects = DTE2.Solution.Projects.Cast<Project>();
+
+			return projects.FirstOrDefault(x =>
+			{
+				ThreadHelper.ThrowIfNotOnUIThread();
+				return x.UniqueName == startupProjectPath;
+			});
+		}
+
+		public void EnsureFileHandlerBuildActions()
+		{
+			ThreadHelper.ThrowIfNotOnUIThread();
+
+			foreach (var editFile in FileHandler.GetAllEditFiles())
+			{
+				var editProjectItem = DTE2.Solution.FindProjectItem(editFile);
+
+				SetProjectItemBuildAction(editProjectItem);
 			}
 		}
 
-		private void SetProjectItemBuildAction(ProjectItem projectItem, prjBuildAction buildAction = prjBuildAction.prjBuildActionNone)
+		public void SetProjectItemBuildAction(ProjectItem projectItem, prjBuildAction buildAction = prjBuildAction.prjBuildActionNone)
 		{
 			ThreadHelper.ThrowIfNotOnUIThread();
 

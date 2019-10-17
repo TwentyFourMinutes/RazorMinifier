@@ -8,7 +8,11 @@ namespace RazorMinifier.Core.Models
 	public class Config
 	{
 		[JsonIgnore]
-		internal string RootDirectory { get; set; }
-		public List<MinifiedRazorFile> Files { get; set; }
+		public string RootDirectory { get; internal set; }
+
+		[JsonIgnore]
+		public string ConfigPath { get; internal set; }
+
+		public HashSet<MinifiedRazorFile> Files { get; set; }
 	}
 }

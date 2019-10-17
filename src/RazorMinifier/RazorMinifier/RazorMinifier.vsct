@@ -1,0 +1,38 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<CommandTable xmlns="http://schemas.microsoft.com/VisualStudio/2005-10-18/CommandTable" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <Extern href="stdidcmd.h"/>
+  <Extern href="vsshlids.h"/>
+
+  <Commands package="guidRazorMinifier">
+    <Groups>
+      <Group guid="guidRazorMinifierCmdSet" id="MyMenuGroup" priority="0x0300">
+        <Parent guid="guidSHLMainMenu" id="IDM_VS_CTXT_ITEMNODE"/>
+      </Group>
+    </Groups>
+
+    <Buttons>
+      <Button guid="guidRazorMinifierCmdSet" id="AddToRazorMinifierId" priority="0x000" type="Button">
+        <Parent guid="guidRazorMinifierCmdSet" id="MyMenuGroup" />
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>Razor Minify</ButtonText>
+        </Strings>
+      </Button>
+    </Buttons>
+  </Commands>
+
+    <VisibilityConstraints>
+    <VisibilityItem guid="guidRazorMinifierCmdSet" id="AddToRazorMinifierId" context="uiContextSupportedFiles" />
+  </VisibilityConstraints>
+    
+  <Symbols>
+    <GuidSymbol name="guidRazorMinifier" value="{f4ac4e92-8fc5-47de-80b0-2d35594bc824}" />
+    
+    <GuidSymbol name="uiContextSupportedFiles" value="{24551deb-f034-43e9-a279-0e541241687e}" />
+    
+    <GuidSymbol name="guidRazorMinifierCmdSet" value="{06dfdf0f-f7a9-4b90-ad45-503948c33a8c}">
+      <IDSymbol name="MyMenuGroup" value="0x1020" />
+      <IDSymbol name="AddToRazorMinifierId" value="0x0100" />
+    </GuidSymbol>
+  </Symbols>
+</CommandTable>
