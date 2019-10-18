@@ -5,29 +5,33 @@ using System.Threading.Tasks;
 
 namespace RazorMinifier.Core
 {
-	internal class RazorFileWatcher : FileSystemWatcher, IDisposable
+	internal class RazorFileWatcher : IDisposable
 	{
 		public readonly MinifiedRazorFile File;
+		public readonly FileSystemWatcher _fileSystemWatcher;
 		public event Func<RazorFileWatcher, Task> FileUpdated;
 		public bool IsDisposed { get; private set; }
 
 		public RazorFileWatcher(MinifiedRazorFile file) : base()
 		{
-			File = file;
 			if (file is null)
 				throw new NullReferenceException(file.GetType().Name);
+
+			File = file;
+
+			_fileSystemWatcher = new FileSystemWatcher();
 
 			Init();
 		}
 
 		private void Init()
 		{
-			this.Filter = System.IO.Path.GetFileName(File.EditFilePath);
-			this.Path = System.IO.Path.GetDirectoryName(File.FullEditFilePath);
-			this.EnableRaisingEvents = true;
-			this.NotifyFilter = NotifyFilters.LastAccess | NotifyFilters.LastWrite | NotifyFilters.CreationTime;
+			_fileSystemWatcher.Filter = Path.GetFileName(File.EditFilePath);
+			_fileSystemWatcher.Path = Path.GetDirectoryName(File.FullEditFilePath);
+			_fileSystemWatcher.EnableRaisingEvents = true;
+			_fileSystemWatcher.NotifyFilter = NotifyFilters.LastAccess | NotifyFilters.LastWrite | NotifyFilters.CreationTime;
 
-			this.Changed += RazorFileWatcher_Changed;
+			_fileSystemWatcher.Changed += RazorFileWatcher_Changed;
 		}
 
 		private void RazorFileWatcher_Changed(object sender, FileSystemEventArgs e)
@@ -38,11 +42,11 @@ namespace RazorMinifier.Core
 			});
 		}
 
-		public new void Dispose()
+		public void Dispose()
 		{
 			if (!IsDisposed)
 			{
-				base.Dispose();
+				_fileSystemWatcher.Dispose();
 				IsDisposed = true;
 			}
 		}
