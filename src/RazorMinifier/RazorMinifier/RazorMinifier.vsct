@@ -15,7 +15,7 @@
         <Parent guid="guidRazorMinifierCmdSet" id="MyMenuGroup" />
         <CommandFlag>DynamicVisibility</CommandFlag>
         <Strings>
-          <ButtonText>Razor Minify</ButtonText>
+          <ButtonText>Add/Remove Razor Minify</ButtonText>
         </Strings>
       </Button>
     </Buttons>

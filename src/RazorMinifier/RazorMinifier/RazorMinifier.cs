@@ -25,7 +25,7 @@ namespace RazorMinifier.VSIX
 	name: "Supported Files",
 	expression: "DotCSharpHtml",
 	termNames: new[] { "DotCSharpHtml" },
-	termValues: new[] { "HierSingleSelectionName:.cshtml$" })]
+	termValues: new[] { "HierSingleSelectionName:(?<!.edit).cshtml$" })]
 	public sealed class RazorMinifier : AsyncPackage
 	{
 		public const string UiContextSupportedFiles = "24551deb-f034-43e9-a279-0e541241687e";

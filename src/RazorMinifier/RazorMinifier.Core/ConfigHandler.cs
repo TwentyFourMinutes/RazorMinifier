@@ -54,7 +54,7 @@ namespace RazorMinifier.Core
 
 				foreach (var file in Config.Files)
 				{
-					if (!tempConfig.Files.Any(x => x.EditFilePath == file.EditFilePath && x.SourceFilePath == file.SourceFilePath))
+					if (!tempConfig.Files.Any(x => x == file))
 					{
 						toRemove.Add(file);
 					}
@@ -62,7 +62,7 @@ namespace RazorMinifier.Core
 
 				foreach (var file in tempConfig.Files)
 				{
-					if (!Config.Files.Any(x => x.EditFilePath == file.EditFilePath && x.SourceFilePath == file.SourceFilePath))
+					if (!Config.Files.Any(x => x == file))
 					{
 						toAdd.Add(file);
 					}
@@ -72,9 +72,7 @@ namespace RazorMinifier.Core
 
 				_ = ConfigUpdated?.Invoke(toRemove, toAdd);
 			}
-			catch
-			{
-				}
+			catch { }
 		}
 
 		public void Dispose()

@@ -14,9 +14,6 @@ using Task = System.Threading.Tasks.Task;
 
 namespace RazorMinifier.VSIX
 {
-	/// <summary>
-	/// Command handler
-	/// </summary>
 	internal sealed class AddToRazorMinifier
 	{
 		public const int CommandId = 0x0100;
@@ -75,7 +72,7 @@ namespace RazorMinifier.VSIX
 				foreach (UIHierarchyItem item in items)
 				{
 					var prjItem = item.Object as ProjectItem;
-					
+
 					var path = prjItem.Properties.Item("FullPath").Value.ToString();
 
 					path = path.Replace(package.Config.RootDirectory, "");
@@ -87,11 +84,18 @@ namespace RazorMinifier.VSIX
 						SourceFilePath = path
 					};
 
-					await package.FileHandler.AddToConfigFile(file);
+					var result = await package.FileHandler.AddToConfigFile(file);
 
-					var editProjItem = package.DTE2.Solution.FindProjectItem(file.EditFilePath);
+					if (!result)
+					{
+						await package.FileHandler.RemoveFromConfigFile(file);
+					}
+					else
+					{
+						var editProjItem = package.DTE2.Solution.FindProjectItem(file.EditFilePath);
 
-					package.SetProjectItemBuildAction(editProjItem);
+						package.SetProjectItemBuildAction(editProjItem);
+					}
 				}
 			}
 			catch { }
