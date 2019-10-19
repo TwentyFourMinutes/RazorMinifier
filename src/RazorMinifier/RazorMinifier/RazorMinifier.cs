@@ -63,33 +63,45 @@ namespace RazorMinifier.VSIX
 			if (project != null)
 			{
 				var items = project.ProjectItems.Cast<ProjectItem>();
-				var minifyFile = items.FirstOrDefault(x =>
+				var minifyConfigFile = items.FirstOrDefault(x =>
 				{
 					ThreadHelper.ThrowIfNotOnUIThread();
 					return x.Name == ConfigName;
 				});
 
-				SetProjectItemBuildAction(minifyFile);
-
-				var configPath = Path.Combine(Path.GetDirectoryName(project.FullName), minifyFile.Name);
-
-				if (!File.Exists(configPath))
-					return;
-
-				var configString = string.Empty;
-
-				using (var reader = new StreamReader(configPath))
+				if (minifyConfigFile is null)
 				{
-					configString = await reader.ReadToEndAsync();
+					var configPath = Path.Combine(Path.GetDirectoryName(project.FullName), ConfigName);
+
+					var configHandler = new ConfigHandler(configPath, Path.GetDirectoryName(project.FullName));
+
+					FileHandler = new FileHandler(configHandler);
 				}
+				else
+				{
 
-				Config = JsonConvert.DeserializeObject<Config>(configString);
+					SetProjectItemBuildAction(minifyConfigFile);
 
-				var configHandler = new ConfigHandler(Config, configPath, Path.GetDirectoryName(project.FullName));
+					var configPath = Path.Combine(Path.GetDirectoryName(project.FullName), minifyConfigFile.Name);
 
-				FileHandler = new FileHandler(configHandler);
+					if (!File.Exists(configPath))
+						return;
 
-				EnsureFileHandlerBuildActions();
+					var configString = string.Empty;
+
+					using (var reader = new StreamReader(configPath))
+					{
+						configString = await reader.ReadToEndAsync();
+					}
+
+					Config = JsonConvert.DeserializeObject<Config>(configString);
+
+					var configHandler = new ConfigHandler(Config, configPath, Path.GetDirectoryName(project.FullName));
+
+					FileHandler = new FileHandler(configHandler);
+
+					EnsureFileHandlerBuildActions();
+				}
 			}
 
 			await AddToRazorMinifier.InitializeAsync(this);

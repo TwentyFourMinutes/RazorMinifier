@@ -8,6 +8,10 @@
 *.resx
 *.ico
 
+# Custom directories
+
+Resources/
+
 
 # User-specific files
 *.suo

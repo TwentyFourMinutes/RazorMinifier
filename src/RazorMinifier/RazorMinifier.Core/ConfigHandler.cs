@@ -17,18 +17,38 @@ namespace RazorMinifier.Core
 
 		private readonly FileSystemWatcher _fileSystemWatcher;
 
-		public ConfigHandler(Config config, string configPath, string rootDirectory) : base()
+		public ConfigHandler(string configPath, string rootDirectory)
+		{
+			Config = new Config
+			{
+				ConfigPath = configPath,
+				RootDirectory = rootDirectory,
+				Files = new HashSet<MinifiedRazorFile>()
+			};
+
+			_fileSystemWatcher = Init();
+		}
+
+		public ConfigHandler(Config config, string configPath, string rootDirectory)
 		{
 			Config = config;
 			Config.ConfigPath = configPath;
 			Config.RootDirectory = rootDirectory;
 
-			_fileSystemWatcher = new FileSystemWatcher(config.RootDirectory, Path.GetFileName(config.ConfigPath))
+			_fileSystemWatcher = Init();
+		}
+
+		private FileSystemWatcher Init()
+		{
+			var fileSystemWatcher = new FileSystemWatcher(Config.RootDirectory, Path.GetFileName(Config.ConfigPath))
 			{
 				EnableRaisingEvents = true,
 				NotifyFilter = NotifyFilters.LastAccess | NotifyFilters.LastWrite | NotifyFilters.CreationTime
 			};
-			_fileSystemWatcher.Changed += ConfigChanged;
+
+			fileSystemWatcher.Changed += ConfigChanged;
+
+			return fileSystemWatcher;
 		}
 
 		private async void ConfigChanged(object sender, FileSystemEventArgs e)
