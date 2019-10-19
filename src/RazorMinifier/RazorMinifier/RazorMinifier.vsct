@@ -13,26 +13,36 @@
     <Buttons>
       <Button guid="guidRazorMinifierCmdSet" id="AddToRazorMinifierId" priority="0x000" type="Button">
         <Parent guid="guidRazorMinifierCmdSet" id="MyMenuGroup" />
+        <Icon guid="cmdIcons" id="cmdIcon1" />
         <CommandFlag>DynamicVisibility</CommandFlag>
         <Strings>
           <ButtonText>Add/Remove Razor Minify</ButtonText>
         </Strings>
       </Button>
     </Buttons>
+
+    <Bitmaps>
+      <Bitmap guid="cmdIcons" href="Resources\RazorMinifier.png" usedList="cmdIcon1"/>
+    </Bitmaps>
+
   </Commands>
 
-    <VisibilityConstraints>
+  <VisibilityConstraints>
     <VisibilityItem guid="guidRazorMinifierCmdSet" id="AddToRazorMinifierId" context="uiContextSupportedFiles" />
   </VisibilityConstraints>
-    
+
   <Symbols>
     <GuidSymbol name="guidRazorMinifier" value="{f4ac4e92-8fc5-47de-80b0-2d35594bc824}" />
-    
+
     <GuidSymbol name="uiContextSupportedFiles" value="{24551deb-f034-43e9-a279-0e541241687e}" />
-    
+
     <GuidSymbol name="guidRazorMinifierCmdSet" value="{06dfdf0f-f7a9-4b90-ad45-503948c33a8c}">
       <IDSymbol name="MyMenuGroup" value="0x1020" />
       <IDSymbol name="AddToRazorMinifierId" value="0x0100" />
+    </GuidSymbol>
+
+    <GuidSymbol name="cmdIcons" value="{96af7ade-6609-4989-9938-895f29ca0f25}" >
+      <IDSymbol name="cmdIcon1" value="1" />
     </GuidSymbol>
   </Symbols>
 </CommandTable>
