@@ -6,15 +6,15 @@ namespace RazorMinifier.Core.Models
 	[Serializable]
 	public class MinifiedRazorFile
 	{
-		public string EditFilePath { get; set; }
+		public string InputPath { get; set; }
 
 		[JsonIgnore]
-		internal string FullEditFilePath { get; set; }
+		internal string FullInputPath { get; set; }
 
-		public string SourceFilePath { get; set; }
+		public string OutputPath { get; set; }
 
 		[JsonIgnore]
-		internal string FullSourceFilePath { get; set; }
+		internal string FullOutputPath { get; set; }
 
 		public static bool operator ==(MinifiedRazorFile obj1, MinifiedRazorFile obj2)
 		{
@@ -31,7 +31,7 @@ namespace RazorMinifier.Core.Models
 				return false;
 			}
 
-			return (obj1.EditFilePath == obj2.EditFilePath && obj1.SourceFilePath == obj2.SourceFilePath);
+			return (obj1.InputPath == obj2.InputPath && obj1.OutputPath == obj2.OutputPath);
 		}
 		public static bool operator !=(MinifiedRazorFile obj1, MinifiedRazorFile obj2)
 		{

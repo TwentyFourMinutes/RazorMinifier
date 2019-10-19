@@ -7,7 +7,7 @@ using Task = System.Threading.Tasks.Task;
 
 namespace RazorMinifier.VSIX
 {
-	internal sealed class AddToRazorMinifier
+	internal sealed class ToggleRazorMinifier
 	{
 		public const int CommandId = 0x0100;
 
@@ -15,7 +15,7 @@ namespace RazorMinifier.VSIX
 
 		private readonly RazorMinifier package;
 
-		private AddToRazorMinifier(RazorMinifier package, OleMenuCommandService commandService)
+		private ToggleRazorMinifier(RazorMinifier package, OleMenuCommandService commandService)
 		{
 			this.package = package ?? throw new ArgumentNullException(nameof(package));
 			commandService = commandService ?? throw new ArgumentNullException(nameof(commandService));
@@ -26,7 +26,7 @@ namespace RazorMinifier.VSIX
 			commandService.AddCommand(menuItem);
 		}
 
-		public static AddToRazorMinifier Instance
+		public static ToggleRazorMinifier Instance
 		{
 			get;
 			private set;
@@ -46,7 +46,7 @@ namespace RazorMinifier.VSIX
 
 			OleMenuCommandService commandService = await package.GetServiceAsync(typeof(IMenuCommandService)) as OleMenuCommandService;
 
-			Instance = new AddToRazorMinifier(package, commandService);
+			Instance = new ToggleRazorMinifier(package, commandService);
 		}
 
 		private async void Execute(object sender, EventArgs e)
@@ -74,7 +74,7 @@ namespace RazorMinifier.VSIX
 
 					var file = new MinifiedRazorFile
 					{
-						SourceFilePath = path
+						OutputPath = path
 					};
 
 					var result = await package.FileHandler.AddToConfigFile(file);
@@ -85,7 +85,7 @@ namespace RazorMinifier.VSIX
 					}
 					else
 					{
-						var editProjItem = package.DTE2.Solution.FindProjectItem(file.EditFilePath);
+						var editProjItem = package.DTE2.Solution.FindProjectItem(file.InputPath);
 
 						package.SetProjectItemBuildAction(editProjItem);
 					}

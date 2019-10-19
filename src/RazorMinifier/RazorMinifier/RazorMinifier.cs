@@ -104,7 +104,7 @@ namespace RazorMinifier.VSIX
 				}
 			}
 
-			await AddToRazorMinifier.InitializeAsync(this);
+			await ToggleRazorMinifier.InitializeAsync(this);
 		}
 
 		public Project GetStartupProject()

@@ -56,22 +56,22 @@ namespace RazorMinifier.Core
 
 		private async Task<bool> AddFileToWatchers(MinifiedRazorFile file)
 		{
-			file.FullSourceFilePath = GetFullPathFromRootDir(file.SourceFilePath);
+			file.FullOutputPath = GetFullPathFromRootDir(file.OutputPath);
 
-			if (!File.Exists(file.FullSourceFilePath))
+			if (!File.Exists(file.FullOutputPath))
 			{
 				return false;
 			}
 
-			if (string.IsNullOrWhiteSpace(file.EditFilePath))
+			if (string.IsNullOrWhiteSpace(file.InputPath))
 			{
 				await CreateEditFileWithContent(file);
 			}
 			else
 			{
-				file.FullEditFilePath = GetFullPathFromRootDir(file.EditFilePath);
+				file.FullInputPath = GetFullPathFromRootDir(file.InputPath);
 
-				if (!File.Exists(file.FullEditFilePath))
+				if (!File.Exists(file.FullInputPath))
 				{
 					await CreateEditFileWithContent(file);
 				}
@@ -89,7 +89,7 @@ namespace RazorMinifier.Core
 
 		private bool RemoveFileFromWatchers(MinifiedRazorFile file)
 		{
-			var remove = _watchers.FirstOrDefault(x => x.File.SourceFilePath == file.SourceFilePath);
+			var remove = _watchers.FirstOrDefault(x => x.File.OutputPath == file.OutputPath);
 
 			if (remove is null)
 				return false;
@@ -108,24 +108,24 @@ namespace RazorMinifier.Core
 
 		private async Task CreateEditFileWithContent(MinifiedRazorFile file)
 		{
-			var editPath = Path.ChangeExtension(file.SourceFilePath, ".edit.cshtml");
+			var editPath = Path.ChangeExtension(file.OutputPath, ".edit.cshtml");
 
-			file.EditFilePath = editPath;
-			file.FullEditFilePath = GetFullPathFromRootDir(editPath);
+			file.InputPath = editPath;
+			file.FullInputPath = GetFullPathFromRootDir(editPath);
 
-			File.Copy(file.FullSourceFilePath, file.FullEditFilePath, true);
+			File.Copy(file.FullOutputPath, file.FullInputPath, true);
 
 			await WriteMinifiedContent(file);
 		}
 
 		public IEnumerable<string> GetAllEditFiles()
 		{
-			return _config.Files.Select(x => x.FullEditFilePath);
+			return _config.Files.Select(x => x.FullInputPath);
 		}
 
 		public async Task<bool> AddToConfigFile(MinifiedRazorFile file)
 		{
-			if (_config.Files.Any(x => x.SourceFilePath == file.SourceFilePath))
+			if (_config.Files.Any(x => x.OutputPath == file.OutputPath))
 				return false;
 
 			var result = await AddFileToWatchers(file);
@@ -167,13 +167,13 @@ namespace RazorMinifier.Core
 		{
 			try
 			{
-				if (!File.Exists(file.FullSourceFilePath))
+				if (!File.Exists(file.FullOutputPath))
 				{
-					File.Create(file.FullSourceFilePath).Close();
+					File.Create(file.FullOutputPath).Close();
 				}
 
-				using (var writer = new StreamWriter(file.FullSourceFilePath, false))
-				using (var reader = new StreamReader(file.FullEditFilePath))
+				using (var writer = new StreamWriter(file.FullOutputPath, false))
+				using (var reader = new StreamReader(file.FullInputPath))
 				{
 					var content = await reader.ReadToEndAsync();
 

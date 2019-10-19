@@ -26,8 +26,8 @@ namespace RazorMinifier.Core
 
 		private void Init()
 		{
-			_fileSystemWatcher.Filter = Path.GetFileName(File.EditFilePath);
-			_fileSystemWatcher.Path = Path.GetDirectoryName(File.FullEditFilePath);
+			_fileSystemWatcher.Filter = Path.GetFileName(File.InputPath);
+			_fileSystemWatcher.Path = Path.GetDirectoryName(File.FullInputPath);
 			_fileSystemWatcher.EnableRaisingEvents = true;
 			_fileSystemWatcher.NotifyFilter = NotifyFilters.LastAccess | NotifyFilters.LastWrite | NotifyFilters.CreationTime;
 
