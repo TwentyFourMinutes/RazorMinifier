@@ -63,11 +63,7 @@ namespace RazorMinifier.VSIX
 			if (project != null)
 			{
 				var items = project.ProjectItems.Cast<ProjectItem>();
-				var minifyConfigFile = items.FirstOrDefault(x =>
-				{
-					ThreadHelper.ThrowIfNotOnUIThread();
-					return x.Name == ConfigName;
-				});
+				var minifyConfigFile = items.FirstOrDefault(x => x.Name == ConfigName);
 
 				if (minifyConfigFile is null)
 				{
@@ -120,11 +116,7 @@ namespace RazorMinifier.VSIX
 
 			var projects = DTE2.Solution.Projects.Cast<Project>();
 
-			return projects.FirstOrDefault(x =>
-			{
-				ThreadHelper.ThrowIfNotOnUIThread();
-				return x.UniqueName == startupProjectPath;
-			});
+			return projects.FirstOrDefault(x => x.UniqueName == startupProjectPath);
 		}
 
 		public void EnsureFileHandlerBuildActions()
@@ -145,19 +137,7 @@ namespace RazorMinifier.VSIX
 
 			var props = projectItem.Properties.Cast<Property>();
 
-			var prop = props.FirstOrDefault(x =>
-			{
-				ThreadHelper.ThrowIfNotOnUIThread();
-
-				var match = false;
-				try
-				{
-					match = x.Name == BuildAction;
-				}
-				catch { }
-
-				return match;
-			});
+			var prop = props.FirstOrDefault(x => string.IsNullOrWhiteSpace(x.Name) && x.Name == BuildAction);
 
 			if ((prjBuildAction)prop.Value != buildAction)
 			{
