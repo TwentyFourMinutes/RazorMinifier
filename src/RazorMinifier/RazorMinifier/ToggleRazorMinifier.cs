@@ -32,7 +32,7 @@ namespace RazorMinifier.VSIX
 			private set;
 		}
 
-		private Microsoft.VisualStudio.Shell.IAsyncServiceProvider ServiceProvider
+		private IAsyncServiceProvider ServiceProvider
 		{
 			get
 			{
