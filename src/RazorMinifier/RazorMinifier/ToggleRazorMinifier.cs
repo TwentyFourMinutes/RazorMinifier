@@ -51,47 +51,46 @@ namespace RazorMinifier.VSIX
 
 		private async void Execute(object sender, EventArgs e)
 		{
-			try
+			if (package.Config is null)
+				return;
+
+			await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+
+			var uih = package.DTE2.ToolWindows.SolutionExplorer;
+
+			var items = (Array)uih.SelectedItems;
+
+			if (items is null || items.Length == 0)
+				return;
+
+			foreach (UIHierarchyItem item in items)
 			{
-				await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+				var prjItem = item.Object as ProjectItem;
 
-				var uih = package.DTE2.ToolWindows.SolutionExplorer;
+				var path = prjItem.Properties.Item("FullPath").Value.ToString();
 
-				var items = (Array)uih.SelectedItems;
+				path = path.Replace(package.Config.RootDirectory, "");
 
-				if (items is null || items.Length == 0)
-					return;
+				path = path.TrimStart('\\').Replace('\\', '/');
 
-				foreach (UIHierarchyItem item in items)
+				var file = new MinifiedRazorFile
 				{
-					var prjItem = item.Object as ProjectItem;
+					OutputPath = path
+				};
 
-					var path = prjItem.Properties.Item("FullPath").Value.ToString();
+				var result = await package.FileHandler.AddToConfigFile(file);
 
-					path = path.Replace(package.Config.RootDirectory, "");
+				if (!result)
+				{
+					package.FileHandler.RemoveFromConfigFile(file);
+				}
+				else
+				{
+					var editProjItem = package.DTE2.Solution.FindProjectItem(file.InputPath.Replace('/', '\\'));
 
-					path = path.TrimStart('\\');
-
-					var file = new MinifiedRazorFile
-					{
-						OutputPath = path
-					};
-
-					var result = await package.FileHandler.AddToConfigFile(file);
-
-					if (!result)
-					{
-						await package.FileHandler.RemoveFromConfigFile(file);
-					}
-					else
-					{
-						var editProjItem = package.DTE2.Solution.FindProjectItem(file.InputPath);
-
-						package.SetProjectItemBuildAction(editProjItem);
-					}
+					package.SetProjectItemBuildAction(editProjItem);
 				}
 			}
-			catch { }
 		}
 	}
 }

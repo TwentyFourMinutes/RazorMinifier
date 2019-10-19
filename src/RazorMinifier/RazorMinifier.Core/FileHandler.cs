@@ -52,6 +52,8 @@ namespace RazorMinifier.Core
 			{
 				await AddFileToWatchers(file);
 			}
+
+			_configHandler.SaveConfigFile();
 		}
 
 		private async Task<bool> AddFileToWatchers(MinifiedRazorFile file)
@@ -104,7 +106,8 @@ namespace RazorMinifier.Core
 		}
 
 		private string GetFullPathFromRootDir(string relativePath)
-			=> Path.Combine(_config.RootDirectory, relativePath);
+			=> new Uri(new Uri(_config.RootDirectory + "\\"), relativePath).LocalPath;
+
 
 		private async Task CreateEditFileWithContent(MinifiedRazorFile file)
 		{
@@ -133,29 +136,24 @@ namespace RazorMinifier.Core
 			if (!result)
 				return true;
 
-			using (var sw = new StreamWriter(_config.ConfigPath, false))
+			if (!File.Exists(_config.ConfigPath))
 			{
-				await sw.WriteAsync(JsonConvert.SerializeObject(_config, Formatting.Indented));
-
-				sw.Close();
+				File.Create(_config.ConfigPath).Close();
 			}
+
+			_configHandler.SaveConfigFile();
 
 			return true;
 		}
 
-		public async Task RemoveFromConfigFile(MinifiedRazorFile file)
+		public void RemoveFromConfigFile(MinifiedRazorFile file)
 		{
 			var result = RemoveFileFromWatchers(file);
 
 			if (!result)
 				return;
 
-			using (var sw = new StreamWriter(_config.ConfigPath, false))
-			{
-				await sw.WriteAsync(JsonConvert.SerializeObject(_config, Formatting.Indented));
-
-				sw.Close();
-			}
+			_configHandler.SaveConfigFile();
 		}
 
 		private Task FileUpdated(RazorFileWatcher watcher)

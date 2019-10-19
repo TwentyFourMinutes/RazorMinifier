@@ -71,6 +71,8 @@ namespace RazorMinifier.VSIX
 
 					var configHandler = new ConfigHandler(configPath, Path.GetDirectoryName(project.FullName));
 
+					Config = configHandler.Config;
+
 					FileHandler = new FileHandler(configHandler);
 				}
 				else
@@ -133,11 +135,14 @@ namespace RazorMinifier.VSIX
 
 		public void SetProjectItemBuildAction(ProjectItem projectItem, prjBuildAction buildAction = prjBuildAction.prjBuildActionNone)
 		{
+			if (projectItem is null)
+				return;
+
 			ThreadHelper.ThrowIfNotOnUIThread();
 
 			var props = projectItem.Properties.Cast<Property>();
 
-			var prop = props.FirstOrDefault(x => string.IsNullOrWhiteSpace(x.Name) && x.Name == BuildAction);
+			var prop = props.FirstOrDefault(x => !string.IsNullOrWhiteSpace(x.Name) && x.Name == BuildAction);
 
 			if ((prjBuildAction)prop.Value != buildAction)
 			{
