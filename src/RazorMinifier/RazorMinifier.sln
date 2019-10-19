@@ -5,9 +5,7 @@ VisualStudioVersion = 16.0.29409.12
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RazorMinifier.VSIX", "RazorMinifier\RazorMinifier.VSIX.csproj", "{88C76E6C-5287-4228-9E9B-1EE5C70E8417}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RazorMinifier.Core", "RazorMinifier.Core\RazorMinifier.Core.csproj", "{86C2282D-2916-4D11-8590-E4814400AA6D}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RazorMinifier.Console", "RazorMinifier.Console\RazorMinifier.Console.csproj", "{3EC086E1-339B-4B81-8208-6F76E57932B2}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RazorMinifier.Core", "RazorMinifier.Core\RazorMinifier.Core.csproj", "{86C2282D-2916-4D11-8590-E4814400AA6D}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -23,10 +21,6 @@ Global
 		{86C2282D-2916-4D11-8590-E4814400AA6D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{86C2282D-2916-4D11-8590-E4814400AA6D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{86C2282D-2916-4D11-8590-E4814400AA6D}.Release|Any CPU.Build.0 = Release|Any CPU
-		{3EC086E1-339B-4B81-8208-6F76E57932B2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{3EC086E1-339B-4B81-8208-6F76E57932B2}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{3EC086E1-339B-4B81-8208-6F76E57932B2}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{3EC086E1-339B-4B81-8208-6F76E57932B2}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
