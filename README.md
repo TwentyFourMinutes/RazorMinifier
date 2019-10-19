@@ -1,6 +1,6 @@
 # RazorMinifier
 
-<img alt="GitHub issues" src="https://img.shields.io/github/issues-raw/TwentyFourMinutes/RazorMinifier"><img alt="GitHub release (latest by date)" src="https://img.shields.io/github/v/release/TwentyFourMinutes/RazorMinifier">
+<img alt="GitHub issues" src="https://img.shields.io/github/issues-raw/TwentyFourMinutes/RazorMinifier"> <img alt="GitHub release (latest by date)" src="https://img.shields.io/github/v/release/TwentyFourMinutes/RazorMinifier">
 
 RazorMinifier is a free extension for Visual Studio 2019.
 
