@@ -19,7 +19,7 @@ With that said there is a pretty good chance that you don't want to compress you
 
 The configuration file must be located on the root Directory of the Startup-Project and must be named `Rminify.json`. Although when you hit `Add/Remove Razor Minify` and the config file does not exist, it will automatically get generated for you. 
 
-1. Create a `.cshtml `or `.html` file if you haven't already then hit right-click on this file. Which should you a few options as shown in the image. Now click on `Add/Remove Razor Minify`.
+1. Create a `.cshtml` or `.html` file if you haven't already then hit right-click on this file. Which should you a few options as shown in the image. Now click on `Add/Remove Razor Minify`.
 
    ![Dialog](https://user-images.githubusercontent.com/36015290/67151966-8c260f00-f2ce-11e9-9629-e7dd59722c03.PNG)
 
