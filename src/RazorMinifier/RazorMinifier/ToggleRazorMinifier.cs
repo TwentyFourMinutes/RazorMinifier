@@ -21,7 +21,10 @@ namespace RazorMinifier.VSIX
 			commandService = commandService ?? throw new ArgumentNullException(nameof(commandService));
 
 			var menuCommandID = new CommandID(CommandSet, CommandId);
-			var menuItem = new OleMenuCommand(this.Execute, menuCommandID);
+			var menuItem = new OleMenuCommand(this.Execute, menuCommandID)
+			{
+				Supported = false
+			};
 
 			commandService.AddCommand(menuItem);
 		}
