@@ -23,9 +23,9 @@ namespace RazorMinifier.VSIX
 	[ProvideMenuResource("Menus.ctmenu", 1)]
 	[ProvideUIContextRule(UiContextSupportedFiles,
 	name: "Supported Files",
-	expression: "DotCSharpHtml",
-	termNames: new[] { "DotCSharpHtml" },
-	termValues: new[] { @"HierSingleSelectionName:(?<!\.edit)\.cshtml$" })]
+	expression: "(SingleProject | MultipleProjects) & DotCSharpHtml",
+	termNames: new[] { "SingleProject", "MultipleProjects", "DotCSharpHtml" },
+	termValues: new[] { VSConstants.UICONTEXT.SolutionHasSingleProject_string, VSConstants.UICONTEXT.SolutionHasMultipleProjects_string, @"HierSingleSelectionName:(?<!\.edit)\.cshtml$" })]
 	public sealed class RazorMinifier : AsyncPackage
 	{
 		public const string UiContextSupportedFiles = "24551deb-f034-43e9-a279-0e541241687e";
