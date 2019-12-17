@@ -14,7 +14,7 @@ namespace RazorMinifier.Core
 
 		static Minifier()
 		{
-			_emptyLineRegex = new Regex(@"(\n|\t|\s\s)");
+			_emptyLineRegex = new Regex(@"^(\s)+", RegexOptions.Multiline);
 			_simpleCommentRegex = new Regex(@"(?<!:)\/\/.*");
 			_multiLineCommentRegex = new Regex(@"(<!--(.|\n)*-->|\/\*(.|\n)*\*\/|@\*(.|\n)*\*@)");
 			_razorSectionRegex = new Regex(@"@section\s\w+\s?{");
