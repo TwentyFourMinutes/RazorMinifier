@@ -22,7 +22,7 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>RazorMinifier</RootNamespace>
     <AssemblyName>RazorMinifier</AssemblyName>
-    <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
     <GeneratePkgDefFile>true</GeneratePkgDefFile>
     <IncludeAssemblyInVSIXContainer>true</IncludeAssemblyInVSIXContainer>
     <IncludeDebugSymbolsInVSIXContainer>true</IncludeDebugSymbolsInVSIXContainer>
@@ -51,6 +51,7 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="Models\Config.cs" />
     <Compile Include="ToggleRazorMinifier.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="RazorMinifier.cs" />
@@ -62,8 +63,13 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Microsoft.VisualStudio.SDK" Version="16.0.202" ExcludeAssets="runtime" />
-    <PackageReference Include="Microsoft.VSSDK.BuildTools" Version="16.3.2099" />
+    <PackageReference Include="Microsoft.VisualStudio.SDK">
+      <Version>16.0.204</Version>
+    </PackageReference>
+    <PackageReference Include="Microsoft.VSSDK.BuildTools" Version="16.6.1018">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
   </ItemGroup>
   <ItemGroup>
     <Content Include="Resources\Icon.png">
@@ -89,6 +95,10 @@
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
+    <Reference Include="DulcisX, Version=1.0.0.0, Culture=neutral, PublicKeyToken=ee564df2d0985226, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\..\DulcisX\src\DulcisX\DulcisX\bin\Release\DulcisX.dll</HintPath>
+    </Reference>
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="System" />
     <Reference Include="System.Data" />
