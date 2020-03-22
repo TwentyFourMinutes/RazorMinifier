@@ -1,12 +1,8 @@
 ﻿using System;
 using System.ComponentModel.Design;
-using System.IO;
 using System.Linq;
-using DulcisX.Core.Enums;
 using DulcisX.Nodes;
 using Microsoft.VisualStudio.Shell;
-using Microsoft.VisualStudio.Shell.Interop;
-using RazorMinifier.Core;
 using Task = System.Threading.Tasks.Task;
 
 namespace RazorMinifier.VSIX
@@ -46,76 +42,57 @@ namespace RazorMinifier.VSIX
             OleMenuCommandService commandService = await package.GetServiceAsync(typeof(IMenuCommandService)) as OleMenuCommandService;
 
             Instance = new ToggleRazorMinifier(package, commandService);
-
-            package.Solution.OpenNodeEvents.OnSaved.Hook(NodeTypes.Document, OnDocumentSaved);
-        }
-
-        public static void OnDocumentSaved(IPhysicalNode node)
-        {
-            var path = node.GetFullName();
-
-            _ = Task.Run(() =>
-            {
-                var content = File.ReadAllText(path);
-
-                File.WriteAllText(path, Minifier.Minify(content));
-            });
         }
 
         private async void Execute(object sender, EventArgs e)
         {
-            if (_package.Config is null)
+            if (!_package.Solution.IsSolutionFullyLoaded())
             {
-                await _package.TrySetConfigFileAsync().ConfigureAwait(false);
+                return;
+            }
 
+            var selectedNodes = _package.Solution.SelectedNodes.ToList();
+
+            if (_package.Config is null &&
+                !await _package.TryLoadConfigFileAsync())
+            {
                 var result = await _package.InfoBar.NewMessage(false)
-                                            .WithErrorImage()
-                                            .WithText("The current solution does not contain a ")
-                                            .WithText("RMinify.config", true)
-                                            .WithText(" do you want to create one?")
-                                            .WithButton<bool>("Yes", true)
-                                            .WithButton("No", false)
-                                            .Publish()
-                                            .WaitForResultAsync().ConfigureAwait(false);
+                                           .WithErrorImage()
+                                           .WithText("The current solution does not contain a ")
+                                           .WithText(RazorMinifier.ConfigName, true)
+                                           .WithText(" do you want to create one?")
+                                           .WithButton<bool>("Yes", true)
+                                           .WithButton("No", false)
+                                           .Publish()
+                                           .WaitForResultAsync();
 
                 if (!result.TryGetResult(out var state) || !state)
                 {
                     return;
                 }
 
-                CreateConfig();
+                _package.CreateConfig();
             }
 
+            var rootPath = _package.Solution.GetFullName();
 
-        }
-
-        private void CreateConfig()
-        {
-            var (project, _) = _package.Solution.GetStartupProjects().FirstOrDefault();
-
-            if (project is null)
+            foreach (var selectedNode in selectedNodes)
             {
-                project = _package.Solution.GetAllProjects().FirstOrDefault();
-
-                if (project is null)
+                if (selectedNode is DocumentNode node)
                 {
-                    _package.InfoBar.NewMessage()
-                                    .WithErrorImage()
-                                    .WithText("There is no project present, in which the config file should be generated in.")
-                                    .WithButton("Ok")
-                                    .WithButton("Try again", CreateConfig)
-                                    .Publish();
+                    var path = node.GetFullName();
 
-                    return;
+                    var relativePath = PathHelper.GetRelativePath(rootPath, path);
+
+                    if (_package.Config.UserSettings.Files.Any(x => x.SourceFile == relativePath ||
+                                                                    x.SourceFile == path))
+                    {
+                        return;
+                    }
+
+                    _package.AddToConfigFile(node, path, relativePath);
                 }
             }
-
-            var success = project.AddDocument(RazorMinifier.ConfigName);
-
-            if (success != VSADDRESULT.ADDRESULT_Success)
-                return;
-
-            _package.TrySetLocalConfigFile(project);
         }
     }
 }
