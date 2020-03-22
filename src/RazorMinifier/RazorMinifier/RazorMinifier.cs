@@ -8,7 +8,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using DulcisX.Core;
 using DulcisX.Core.Enums;
-using DulcisX.Core.Enums.VisualStudio;
 using DulcisX.Nodes;
 using Microsoft.VisualStudio;
 using Microsoft.VisualStudio.Shell;
@@ -73,14 +72,15 @@ namespace RazorMinifier.VSIX
             var root = Path.GetDirectoryName(Solution.GetFullName());
 
             var fullName = node.GetFullName();
+            var fileName = node.GetFileName();
 
             var minifiedFile = Config.UserSettings.Files.Find(x => x.GetFullSourcePath(root) == fullName);
 
             if (minifiedFile is null)
             {
-                if (fullName == ConfigName)
+                if (fileName == ConfigName)
                 {
-                    TryUpdateConfigFile(fullName, false);
+                    TryUpdateConfigFile(fullName);
                 }
 
                 return;
@@ -94,21 +94,24 @@ namespace RazorMinifier.VSIX
             if (Config is null)
                 return;
 
-            document = document.ChangeExtension("edit.cshtml");
-
-            var parent = document.GetParent();
-
-            if (parent is ProjectNode project)
+            if (!File.Exists(Path.ChangeExtension(fullName, "edit.cshtml")))
             {
-                project.CreateDocument(fullName);
-            }
-            else
-            {
-                var folderNode = (FolderNode)parent;
+                document = document.ChangeExtension("edit.cshtml");
 
-                project = document.GetParentProject();
+                var parent = document.GetParent();
 
-                project.CreateDocument(folderNode, fullName);
+                if (parent is ProjectNode project)
+                {
+                    project.CreateDocument(fullName);
+                }
+                else
+                {
+                    var folderNode = (FolderNode)parent;
+
+                    project = document.GetParentProject();
+
+                    project.CreateDocument(folderNode, fullName);
+                }
             }
 
             var newPath = Path.ChangeExtension(relativePath, "edit.cshtml");
@@ -122,6 +125,13 @@ namespace RazorMinifier.VSIX
             Config.UserSettings.Files.Add(minifiedFile);
 
             MinifyFile(minifiedFile);
+
+            SetConfigFile(Config.FullName);
+        }
+
+        public void RemoveFromConfigFile(MinifiedFile file)
+        {
+            Config.UserSettings.Files.Remove(file);
 
             SetConfigFile(Config.FullName);
         }
@@ -173,6 +183,9 @@ namespace RazorMinifier.VSIX
 
         public void SetConfigFile(string fullName)
         {
+            if (!File.Exists(fullName))
+                return;
+
             UserSettings config = Config?.UserSettings ?? new UserSettings { Files = new List<MinifiedFile>() };
 
             var content = JsonConvert.SerializeObject(config, Formatting.Indented);

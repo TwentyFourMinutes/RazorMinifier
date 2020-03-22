@@ -84,13 +84,19 @@ namespace RazorMinifier.VSIX
 
                     var relativePath = PathHelper.GetRelativePath(rootPath, path);
 
-                    if (_package.Config.UserSettings.Files.Any(x => x.SourceFile == relativePath ||
-                                                                    x.SourceFile == path))
-                    {
-                        return;
-                    }
+                    var file = _package.Config.UserSettings.Files.Find(x => x.SourceFile == relativePath ||
+                                                                            x.SourceFile == path ||
+                                                                            x.OutputFile == relativePath ||
+                                                                            x.OutputFile == path);
 
-                    _package.AddToConfigFile(node, path, relativePath);
+                    if (file is object)
+                    {
+                        _package.RemoveFromConfigFile(file);
+                    }
+                    else
+                    {
+                        _package.AddToConfigFile(node, path, relativePath);
+                    }
                 }
             }
         }
