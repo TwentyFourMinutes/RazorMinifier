@@ -8,6 +8,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using DulcisX.Core;
 using DulcisX.Core.Enums;
+using DulcisX.Core.Enums.VisualStudio;
 using DulcisX.Nodes;
 using Microsoft.VisualStudio;
 using Microsoft.VisualStudio.Shell;
@@ -54,15 +55,41 @@ namespace RazorMinifier.VSIX
 
             await ToggleRazorMinifier.InitializeAsync(this);
 
+            Solution.OpenNodeEvents.OnSaved.Hook(NodeTypes.Document, OnDocumentSaved);
+            Solution.ProjectNodeChangedEvents.OnDocumentsAdded += OnDocumentsAdded;
+            Solution.ProjectNodeChangedEvents.OnDocumentsRemoved += OnDocumentsRemoved;
+
             if (!Solution.IsSolutionFullyLoaded())
             {
                 return;
             }
 
-            Solution.OpenNodeEvents.OnSaved.Hook(NodeTypes.Document, OnDocumentSaved);
-
             await TryLoadConfigFileAsync();
         }
+
+        private void OnDocumentsAdded(IEnumerable<AddedPhysicalNode<DocumentNode, VSADDFILEFLAGS>> addedDocuments)
+        {
+            if (Config is object)
+            {
+                return;
+            }
+
+            var cfg = addedDocuments.FirstOrDefault(x => x.Node.GetFileName().ToLower() == ConfigName);
+
+            if (cfg is object)
+            {
+                TryLoadConfigFile(cfg.Node, false);
+            }
+        }
+
+        private void OnDocumentsRemoved(IEnumerable<RemovedPhysicalNode<PhysicalNodeRemovedFlags>> removedDocuments)
+        {
+            if (Config is object && removedDocuments.Any(x => x.FullName == Config.FullName))
+            {
+                Config = null;
+            }
+        }
+
 
         public void OnDocumentSaved(IPhysicalNode node)
         {
@@ -199,6 +226,9 @@ namespace RazorMinifier.VSIX
         {
             var config = await GetConfigFileAsync();
 
+            if (config is null)
+                return false;
+
             return TryLoadConfigFile(config);
         }
 
@@ -211,7 +241,7 @@ namespace RazorMinifier.VSIX
             return TryLoadConfigFile(config);
         }
 
-        public bool TryLoadConfigFile(DocumentNode config)
+        public bool TryLoadConfigFile(DocumentNode config, bool showMessageOnError = true)
         {
             if (config is null)
             {
@@ -225,7 +255,7 @@ namespace RazorMinifier.VSIX
                 FullName = fullName
             };
 
-            return TryUpdateConfigFile(fullName);
+            return TryUpdateConfigFile(fullName, showMessageOnError);
         }
 
         public bool TryUpdateConfigFile(string fullName, bool showMessageOnError = true)
@@ -236,7 +266,7 @@ namespace RazorMinifier.VSIX
 
             try
             {
-                settings = JsonConvert.DeserializeObject<UserSettings>(System.IO.File.ReadAllText(fullName));
+                settings = JsonConvert.DeserializeObject<UserSettings>(File.ReadAllText(fullName));
 
                 foreach (var file in settings.Files)
                 {
