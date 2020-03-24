@@ -90,7 +90,6 @@ namespace RazorMinifier.VSIX
             }
         }
 
-
         public void OnDocumentSaved(IPhysicalNode node)
         {
             if (Config is null)
