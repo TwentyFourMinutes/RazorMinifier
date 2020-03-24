@@ -7,7 +7,6 @@ namespace RazorMinifier.Core
 	public static class Minifier
 	{
 		private static readonly Regex _emptyLineRegex;
-		private static readonly Regex _simpleCommentRegex;
 		private static readonly Regex _multiLineCommentRegex;
 		private static readonly Regex _razorSectionRegex;
 		private static readonly Regex _razorFunctionsRegex;
@@ -15,8 +14,7 @@ namespace RazorMinifier.Core
 		static Minifier()
 		{
 			_emptyLineRegex = new Regex(@"(^(\s)+|(\s)*(\v|\n|\r))", RegexOptions.Multiline);
-			_simpleCommentRegex = new Regex(@"(?<!:)\/\/.*");
-			_multiLineCommentRegex = new Regex(@"(<!--(.|\n)*-->|\/\*(.|\n)*\*\/|@\*(.|\n)*\*@)");
+			_multiLineCommentRegex = new Regex(@"(<!--(.|\n)*?-->|\/\*(.|\n)*?\*\/|@\*(.|\n)*?\*@)");
 			_razorSectionRegex = new Regex(@"@section\s\w+\s?{");
 			_razorFunctionsRegex = new Regex(@"@functions\s\w+\s?{");
 		}
@@ -49,8 +47,6 @@ namespace RazorMinifier.Core
 					break;
 				}
 			}
-
-			input = _simpleCommentRegex.Replace(input, string.Empty);
 
 			input = _multiLineCommentRegex.Replace(input, string.Empty);
 
