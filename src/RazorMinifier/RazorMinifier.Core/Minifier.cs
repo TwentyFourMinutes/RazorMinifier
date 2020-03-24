@@ -4,7 +4,7 @@ using System.Text.RegularExpressions;
 
 namespace RazorMinifier.Core
 {
-	internal static class Minifier
+	public static class Minifier
 	{
 		private static readonly Regex _emptyLineRegex;
 		private static readonly Regex _simpleCommentRegex;
