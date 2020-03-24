@@ -166,11 +166,25 @@ namespace RazorMinifier.VSIX
         {
             var root = Path.GetDirectoryName(Solution.GetFullName());
 
+            var destinationFile = minifiedFile.GetFullOutputPath(root);
+
+            if (!File.Exists(destinationFile))
+            {
+                InfoBar.NewMessage()
+                           .WithErrorImage()
+                           .WithText("The path ")
+                           .WithText(minifiedFile.OutputFile, underline: true)
+                           .WithText(" is not valid.")
+                           .Publish();
+
+                return;
+            }
+
             var content = File.ReadAllText(minifiedFile.GetFullSourcePath(root));
 
             content = Minifier.Minify(content);
 
-            File.WriteAllText(minifiedFile.GetFullOutputPath(root), content);
+            File.WriteAllText(destinationFile, content);
         }
 
         public void CreateConfig()
