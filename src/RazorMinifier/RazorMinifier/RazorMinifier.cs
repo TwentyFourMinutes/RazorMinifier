@@ -29,7 +29,7 @@ namespace RazorMinifier.VSIX
     name: "Supported Files",
     expression: "SolutionExists & (SingleProject | MultipleProjects) & DotCSharpHtml",
     termNames: new[] { "SolutionExists", "SingleProject", "MultipleProjects", "DotCSharpHtml" },
-    termValues: new[] { VSConstants.UICONTEXT.SolutionExists_string, VSConstants.UICONTEXT.SolutionHasSingleProject_string, VSConstants.UICONTEXT.SolutionHasMultipleProjects_string, @"HierSingleSelectionName:(?<!\.edit)\.cshtml$" })]
+    termValues: new[] { VSConstants.UICONTEXT.SolutionExistsAndFullyLoaded_string, VSConstants.UICONTEXT.SolutionHasSingleProject_string, VSConstants.UICONTEXT.SolutionHasMultipleProjects_string, @"HierSingleSelectionName:(?<!\.edit)\.cshtml$" })]
     public sealed class RazorMinifier : PackageX
     {
         public const string UiContextSupportedFiles = "24551deb-f034-43e9-a279-0e541241687e";
@@ -39,9 +39,12 @@ namespace RazorMinifier.VSIX
 
         public const string ConfigName = "rminify.json";
 
+        private readonly SemaphoreSlim _semaphoreSlim = new SemaphoreSlim(1);
+
         public RazorMinifier()
         {
             base.OnInitializeAsync += RazorMinifier_OnInitializeAsync;
+            base.OnDisposing += OnPackageDisposing;
         }
 
         private async Task RazorMinifier_OnInitializeAsync(CancellationToken arg1, IProgress<ServiceProgressData> arg2)
@@ -59,12 +62,7 @@ namespace RazorMinifier.VSIX
             Solution.ProjectNodeChangedEvents.OnDocumentsAdded += OnDocumentsAdded;
             Solution.ProjectNodeChangedEvents.OnDocumentsRemoved += OnDocumentsRemoved;
 
-            if (!Solution.IsSolutionFullyLoaded())
-            {
-                return;
-            }
-
-            await TryLoadConfigFileAsync();
+            _ = JoinableTaskFactory.RunAsync(async () => await TryLoadConfigFileAsync());
         }
 
         private void OnDocumentsAdded(IEnumerable<AddedPhysicalNode<DocumentNode, VSADDFILEFLAGS>> addedDocuments)
@@ -237,12 +235,24 @@ namespace RazorMinifier.VSIX
 
         public async Task<bool> TryLoadConfigFileAsync()
         {
-            var config = await GetConfigFileAsync();
+            await _semaphoreSlim.WaitAsync();
 
-            if (config is null)
-                return false;
+            try
+            {
+                if (Config is object)
+                    return true;
 
-            return TryLoadConfigFile(config);
+                var config = await GetConfigFileAsync();
+
+                if (config is null)
+                    return false;
+
+                return TryLoadConfigFile(config);
+            }
+            finally
+            {
+                _semaphoreSlim.Release();
+            }
         }
 
         public bool TryLoadLocalConfigFile(ProjectNode projectNode)
@@ -346,5 +356,17 @@ namespace RazorMinifier.VSIX
         }
 
         #endregion
+
+        private void OnPackageDisposing()
+        {
+            base.OnInitializeAsync -= RazorMinifier_OnInitializeAsync;
+            base.OnDisposing -= OnPackageDisposing;
+
+            Solution.OpenNodeEvents.OnSaved.UnHook(NodeTypes.Document, OnDocumentSaved);
+            Solution.ProjectNodeChangedEvents.OnDocumentsAdded -= OnDocumentsAdded;
+            Solution.ProjectNodeChangedEvents.OnDocumentsRemoved -= OnDocumentsRemoved;
+
+            _semaphoreSlim.Dispose();
+        }
     }
 }
