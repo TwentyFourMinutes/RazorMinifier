@@ -52,6 +52,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="Models\Config.cs" />
+    <Compile Include="Models\Enums\MinifyType.cs" />
     <Compile Include="PathHelper.cs" />
     <Compile Include="ToggleRazorMinifier.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -64,6 +65,9 @@
     </None>
   </ItemGroup>
   <ItemGroup>
+    <Content Include="esbuild.exe">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <Content Include="Resources\Icon.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       <IncludeInVSIX>true</IncludeInVSIX>
@@ -103,6 +107,9 @@
   <ItemGroup>
     <PackageReference Include="DulcisX">
       <Version>2.1.0-alpha</Version>
+    </PackageReference>
+    <PackageReference Include="System.Threading.Tasks.Extensions">
+      <Version>4.5.4</Version>
     </PackageReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

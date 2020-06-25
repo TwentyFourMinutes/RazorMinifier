@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data.SqlTypes;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
@@ -14,8 +15,9 @@ using Microsoft.VisualStudio;
 using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Shell.Interop;
 using Newtonsoft.Json;
-using RazorMinifier.Core;
+using RazorMinifier.Core.Minifiers;
 using RazorMinifier.Models;
+using RazorMinifier.Models.Enums;
 using Task = System.Threading.Tasks.Task;
 
 namespace RazorMinifier.VSIX
@@ -29,7 +31,7 @@ namespace RazorMinifier.VSIX
     name: "Supported Files",
     expression: "SolutionExists & (SingleProject | MultipleProjects) & DotCSharpHtml",
     termNames: new[] { "SolutionExists", "SingleProject", "MultipleProjects", "DotCSharpHtml" },
-    termValues: new[] { VSConstants.UICONTEXT.SolutionExistsAndFullyLoaded_string, VSConstants.UICONTEXT.SolutionHasSingleProject_string, VSConstants.UICONTEXT.SolutionHasMultipleProjects_string, @"HierSingleSelectionName:(?<!\.edit)\.cshtml$" })]
+    termValues: new[] { VSConstants.UICONTEXT.SolutionExistsAndFullyLoaded_string, VSConstants.UICONTEXT.SolutionHasSingleProject_string, VSConstants.UICONTEXT.SolutionHasMultipleProjects_string, @"HierSingleSelectionName:((?<!\.edit)\.cshtml)|((?<!\.min)\.js)$" })]
     public sealed class RazorMinifier : PackageX
     {
         public const string UiContextSupportedFiles = "24551deb-f034-43e9-a279-0e541241687e";
@@ -40,6 +42,8 @@ namespace RazorMinifier.VSIX
         public const string ConfigName = "rminify.json";
 
         private readonly SemaphoreSlim _semaphoreSlim = new SemaphoreSlim(1);
+
+        private volatile bool _ignoreAddedFile;
 
         public RazorMinifier()
         {
@@ -67,7 +71,7 @@ namespace RazorMinifier.VSIX
 
         private void OnDocumentsAdded(IEnumerable<AddedPhysicalNode<DocumentNode, VSADDFILEFLAGS>> addedDocuments)
         {
-            if (Config is object)
+            if (Config is object || _ignoreAddedFile)
             {
                 return;
             }
@@ -98,26 +102,70 @@ namespace RazorMinifier.VSIX
             var fullName = node.GetFullName();
             var fileName = node.GetFileName();
 
-            var minifiedFile = Config.UserSettings.Files.Find(x => x.GetFullSourcePath(root) == fullName);
-
-            if (minifiedFile is null)
+            if (fileName == ConfigName)
             {
-                if (fileName == ConfigName)
-                {
-                    TryUpdateConfigFile(fullName);
-                }
+                TryUpdateConfigFile(fullName);
 
                 return;
             }
 
-            MinifyFile(minifiedFile);
+            var minifiedFile = Config.FindFileByFullName(root, fullName, Path.GetExtension(fileName) == ".js" ? MinifyType.Js : MinifyType.CSHtml);
+
+            if (minifiedFile is null)
+            {
+                return;
+            }
+
+            _ = Task.Run(() => MinifyFileAsync(minifiedFile));
         }
 
-        public void AddToConfigFile(DocumentNode document, string fullName, string relativePath)
+        public async Task AddToConfigFile(DocumentNode document, string fullName, string relativePath, MinifyType minifyType)
         {
             if (Config is null)
                 return;
 
+            MinifiedFile minifiedFile;
+
+            switch (minifyType)
+            {
+                case MinifyType.Js:
+                    minifiedFile = AddJsToConfigFile(relativePath);
+                    Config.UserSettings.JsFiles.Add((JsMinifiedFile)minifiedFile);
+                    break;
+                case MinifyType.CSHtml:
+                    minifiedFile = await ThreadHelper.JoinableTaskFactory.RunAsync(() =>
+                    {
+                        var file = AddCSHtmlToConfigFile(document, fullName, relativePath);
+
+                        return Task.FromResult(file);
+                    });
+
+                    Config.UserSettings.CSHtmlFiles.Add(minifiedFile);
+                    break;
+                default:
+                    throw new InvalidOperationException("Please create an issue on GitHub, if this throws.");
+            }
+
+            await MinifyFileAsync(minifiedFile);
+
+            SetConfigFile(Config.FullName);
+        }
+
+        private JsMinifiedFile AddJsToConfigFile(string relativePath)
+        {
+            return new JsMinifiedFile
+            {
+                OutputFile = Path.ChangeExtension(relativePath, "min.js"),
+                SourceFile = relativePath,
+                RemoveWhitespaces = true,
+                ShortenIdentifiers = true,
+                ShortenSyntax = true
+            };
+
+        }
+
+        private MinifiedFile AddCSHtmlToConfigFile(DocumentNode document, string fullName, string relativePath)
+        {
             if (!File.Exists(Path.ChangeExtension(fullName, "edit.cshtml")))
             {
                 document = document.ChangeExtension("edit.cshtml");
@@ -140,28 +188,24 @@ namespace RazorMinifier.VSIX
 
             var newPath = Path.ChangeExtension(relativePath, "edit.cshtml");
 
-            var minifiedFile = new MinifiedFile
+            return new MinifiedFile
             {
                 OutputFile = relativePath,
                 SourceFile = newPath
             };
-
-            Config.UserSettings.Files.Add(minifiedFile);
-
-            MinifyFile(minifiedFile);
-
-            SetConfigFile(Config.FullName);
         }
 
         public void RemoveFromConfigFile(MinifiedFile file)
         {
-            Config.UserSettings.Files.Remove(file);
+            Config.RemoveFile(file);
 
             SetConfigFile(Config.FullName);
         }
 
-        public void MinifyFile(MinifiedFile minifiedFile)
+        public async Task MinifyFileAsync(MinifiedFile minifiedFile)
         {
+            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+
             var root = Path.GetDirectoryName(Solution.GetFullName());
 
             var destinationFile = minifiedFile.GetFullOutputPath(root);
@@ -169,20 +213,34 @@ namespace RazorMinifier.VSIX
             if (!File.Exists(destinationFile))
             {
                 InfoBar.NewMessage()
-                           .WithErrorImage()
-                           .WithText("The path ")
-                           .WithText(minifiedFile.OutputFile, underline: true)
-                           .WithText(" is not valid.")
-                           .Publish();
+                       .WithErrorImage()
+                       .WithText("The path ")
+                       .WithText(minifiedFile.OutputFile, underline: true)
+                       .WithText(" is not valid.")
+                       .Publish();
 
                 return;
             }
 
-            var content = File.ReadAllText(minifiedFile.GetFullSourcePath(root));
-
-            content = Minifier.Minify(content);
-
-            File.WriteAllText(destinationFile, content);
+            switch (minifiedFile.MinifyType)
+            {
+                case MinifyType.CSHtml:
+                    CSHtmlMinifier.MinifyFile(minifiedFile.GetFullSourcePath(root), destinationFile);
+                    break;
+                case MinifyType.Js:
+                    if (!await JsMinifier.TryMinifyFileAsync("esbuild.exe", minifiedFile.GetFullSourcePath(root), destinationFile, ((JsMinifiedFile)minifiedFile).Options))
+                    {
+                        InfoBar.NewMessage()
+                               .WithErrorImage()
+                               .WithText("The file ")
+                               .WithText(minifiedFile.SourceFile, underline: true)
+                               .WithText(" contains invalid js.")
+                               .Publish();
+                    }
+                    break;
+                default:
+                    throw new InvalidOperationException("Please create an issue on GitHub, if this throws.");
+            }
         }
 
         public void CreateConfig()
@@ -205,7 +263,11 @@ namespace RazorMinifier.VSIX
                 }
             }
 
+            _ignoreAddedFile = true;
+
             var success = project.CreateDocument(RazorMinifier.ConfigName);
+
+            _ignoreAddedFile = false;
 
             if (success != VSADDRESULT.ADDRESULT_Success)
                 return;
@@ -224,7 +286,7 @@ namespace RazorMinifier.VSIX
             if (!File.Exists(fullName))
                 return;
 
-            UserSettings config = Config?.UserSettings ?? new UserSettings { Files = new List<MinifiedFile>() };
+            UserSettings config = Config?.UserSettings ?? new UserSettings { CSHtmlFiles = new List<MinifiedFile>(), JsFiles = new List<JsMinifiedFile>() };
 
             var content = JsonConvert.SerializeObject(config, Formatting.Indented);
 
@@ -289,9 +351,17 @@ namespace RazorMinifier.VSIX
 
             try
             {
-                settings = JsonConvert.DeserializeObject<UserSettings>(File.ReadAllText(fullName));
+                var content = File.ReadAllText(fullName);
 
-                foreach (var file in settings.Files)
+                // Updates older config files.
+                content = content.Replace("\"Files\"", "\"CSHtmlFiles\"");
+
+                settings = JsonConvert.DeserializeObject<UserSettings>(content);
+
+                settings.CSHtmlFiles = settings.CSHtmlFiles ?? new List<MinifiedFile>();
+                settings.JsFiles = settings.JsFiles ?? new List<JsMinifiedFile>();
+
+                foreach (var file in settings.CSHtmlFiles.Union(settings.JsFiles))
                 {
                     var isSourceValid = File.Exists(file.GetFullSourcePath(root));
                     var isOutputValid = File.Exists(file.GetFullOutputPath(root));

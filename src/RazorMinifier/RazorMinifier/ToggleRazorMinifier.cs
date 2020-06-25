@@ -1,8 +1,10 @@
 ﻿using System;
 using System.ComponentModel.Design;
+using System.IO;
 using System.Linq;
 using DulcisX.Nodes;
 using Microsoft.VisualStudio.Shell;
+using RazorMinifier.Models.Enums;
 using Task = System.Threading.Tasks.Task;
 
 namespace RazorMinifier.VSIX
@@ -84,10 +86,9 @@ namespace RazorMinifier.VSIX
 
                     var relativePath = PathHelper.GetRelativePath(rootPath, path);
 
-                    var file = _package.Config.UserSettings.Files.Find(x => x.SourceFile == relativePath ||
-                                                                            x.SourceFile == path ||
-                                                                            x.OutputFile == relativePath ||
-                                                                            x.OutputFile == path);
+                    var minifyType = Path.GetExtension(path) == ".js" ? MinifyType.Js : MinifyType.CSHtml;
+
+                    var file = _package.Config.FindFile(path, relativePath, minifyType);
 
                     if (file is object)
                     {
@@ -95,7 +96,7 @@ namespace RazorMinifier.VSIX
                     }
                     else
                     {
-                        _package.AddToConfigFile(node, path, relativePath);
+                        await _package.AddToConfigFile(node, path, relativePath, minifyType);
                     }
                 }
             }
