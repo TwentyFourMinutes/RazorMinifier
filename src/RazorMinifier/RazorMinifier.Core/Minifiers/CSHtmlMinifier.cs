@@ -69,7 +69,7 @@ namespace RazorMinifier.Core.Minifiers
 
             if (usePreMailer)
             {
-                inlineResult = PreMailer.Net.PreMailer.MoveCssInline(input, true, stripIdAndClassAttributes: true);
+                inlineResult = PreMailer.Net.PreMailer.MoveCssInline(input, stripIdAndClassAttributes: true);
                 input = inlineResult.Html;
             }
 
