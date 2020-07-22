@@ -1,10 +1,10 @@
-﻿using System;
+﻿using DulcisX.Nodes;
+using Microsoft.VisualStudio.Shell;
+using RazorMinifier.Models.Enums;
+using System;
 using System.ComponentModel.Design;
 using System.IO;
 using System.Linq;
-using DulcisX.Nodes;
-using Microsoft.VisualStudio.Shell;
-using RazorMinifier.Models.Enums;
 using Task = System.Threading.Tasks.Task;
 
 namespace RazorMinifier.VSIX
@@ -96,7 +96,7 @@ namespace RazorMinifier.VSIX
                     }
                     else
                     {
-                        await _package.AddToConfigFile(node, path, relativePath, minifyType);
+                        await _package.AddToConfigFileAsync(node, path, relativePath, minifyType);
                     }
                 }
             }

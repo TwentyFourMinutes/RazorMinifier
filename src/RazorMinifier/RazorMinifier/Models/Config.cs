@@ -1,9 +1,9 @@
 ﻿using Newtonsoft.Json;
 using RazorMinifier.Core.Minifiers;
 using RazorMinifier.Models.Enums;
+using System;
 using System.Collections.Generic;
 using System.IO;
-using System;
 
 namespace RazorMinifier.Models
 {
@@ -18,7 +18,7 @@ namespace RazorMinifier.Models
             switch (file.MinifyType)
             {
                 case MinifyType.CSHtml:
-                    UserSettings.CSHtmlFiles.Remove(file);
+                    UserSettings.CSHtmlFiles.Remove((CsHtmlMinifiedFile)file);
                     break;
                 case MinifyType.Js:
                     UserSettings.JsFiles.Remove((JsMinifiedFile)file);
@@ -73,11 +73,11 @@ namespace RazorMinifier.Models
 
     public class UserSettings
     {
-        public List<MinifiedFile> CSHtmlFiles { get; set; }
+        public List<CsHtmlMinifiedFile> CSHtmlFiles { get; set; }
         public List<JsMinifiedFile> JsFiles { get; set; }
     }
 
-    public class MinifiedFile
+    public abstract class MinifiedFile
     {
         public string SourceFile { get; set; }
         public string OutputFile { get; set; }
@@ -106,6 +106,11 @@ namespace RazorMinifier.Models
 
         private string GetFullPath(string root, string path)
             => Path.IsPathRooted(path) ? path : Path.Combine(root, path);
+    }
+
+    public class CsHtmlMinifiedFile : MinifiedFile
+    {
+        public bool UsePreMailer { get; set; }
     }
 
     public class JsMinifiedFile : MinifiedFile

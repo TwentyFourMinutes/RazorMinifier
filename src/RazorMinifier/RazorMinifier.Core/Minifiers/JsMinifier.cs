@@ -1,9 +1,9 @@
-﻿using System;
+﻿using StringyEnums;
+using System;
 using System.Diagnostics;
 using System.IO;
 using System.Text;
 using System.Threading.Tasks;
-using StringyEnums;
 
 namespace RazorMinifier.Core.Minifiers
 {

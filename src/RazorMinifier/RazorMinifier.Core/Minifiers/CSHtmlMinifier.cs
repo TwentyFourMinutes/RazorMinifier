@@ -1,7 +1,9 @@
-﻿using System;
+﻿using PreMailer.Net;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 
 namespace RazorMinifier.Core.Minifiers
 {
@@ -20,16 +22,21 @@ namespace RazorMinifier.Core.Minifiers
             _razorFunctionsRegex = new Regex(@"@functions\s\w+\s?{");
         }
 
-        public static void MinifyFile(string source, string output)
+        public static Task<MinifyResult> MinifyFileAsync(string source, string output, bool usePreMailer)
         {
-            var content = File.ReadAllText(source);
+            return Task.Run(() =>
+            {
+                var content = File.ReadAllText(source);
 
-            content = Minify(content);
+                var result = Minify(content, usePreMailer);
 
-            File.WriteAllText(output, content);
+                File.WriteAllText(output, result.Item1);
+
+                return result.Item2;
+            });
         }
 
-        public static string Minify(string input)
+        private static (string, MinifyResult) Minify(string input, bool usePreMailer)
         {
             var headers = new List<string>();
 
@@ -58,6 +65,14 @@ namespace RazorMinifier.Core.Minifiers
                 }
             }
 
+            InlineResult inlineResult = null;
+
+            if (usePreMailer)
+            {
+                inlineResult = PreMailer.Net.PreMailer.MoveCssInline(input, true, stripIdAndClassAttributes: true);
+                input = inlineResult.Html;
+            }
+
             input = _multiLineCommentRegex.Replace(input, string.Empty);
 
             input = _emptyLineRegex.Replace(input, string.Empty);
@@ -77,7 +92,7 @@ namespace RazorMinifier.Core.Minifiers
                 input = string.Concat(header, Environment.NewLine, input);
             }
 
-            return input;
+            return (input, new MinifyResult { Success = inlineResult is null || (inlineResult != null && inlineResult.Warnings.Count == 0), Message = inlineResult is null ? null : string.Join(", ", inlineResult.Warnings) });
         }
     }
 }
