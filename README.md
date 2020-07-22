@@ -28,7 +28,9 @@ The configuration file must be located on the root Directory of the Startup-Proj
 
 ## Features
 
-- Minifying of `cshtml` and `html` file on save
+- Minifying of `cshtml` and `html` files on save
+- Minifying of `js` files on save
+- Inlining of `css` inside `cshtml` and `html` files on save
 - Toggling addition/removal with a simple click
 - Manual editing of the `Rminify.json` config file
 - Maintains functionality of `cshtml` files after minifying
