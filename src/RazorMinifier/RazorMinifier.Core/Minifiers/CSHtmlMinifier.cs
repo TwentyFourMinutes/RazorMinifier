@@ -1,9 +1,9 @@
-﻿using PreMailer.Net;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using PreMailer.Net;
 
 namespace RazorMinifier.Core.Minifiers
 {
@@ -77,14 +77,22 @@ namespace RazorMinifier.Core.Minifiers
 
             input = _emptyLineRegex.Replace(input, string.Empty);
 
+            var indexOffset = 0;
+
             foreach (Match match in _razorSectionRegex.Matches(input))
             {
-                input = input.Insert(match.Index, Environment.NewLine);
+                input = input.Insert(match.Index + indexOffset, Environment.NewLine);
+
+                indexOffset += Environment.NewLine.Length;
             }
+
+            indexOffset = 0;
 
             foreach (Match match in _razorFunctionsRegex.Matches(input))
             {
-                input = input.Insert(match.Index, Environment.NewLine);
+                input = input.Insert(match.Index + indexOffset, Environment.NewLine);
+
+                indexOffset += Environment.NewLine.Length;
             }
 
             foreach (var header in headers)

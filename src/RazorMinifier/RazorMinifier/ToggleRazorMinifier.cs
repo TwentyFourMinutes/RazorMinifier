@@ -1,10 +1,10 @@
-﻿using DulcisX.Nodes;
-using Microsoft.VisualStudio.Shell;
-using RazorMinifier.Models.Enums;
-using System;
+﻿using System;
 using System.ComponentModel.Design;
 using System.IO;
 using System.Linq;
+using DulcisX.Nodes;
+using Microsoft.VisualStudio.Shell;
+using RazorMinifier.Models.Enums;
 using Task = System.Threading.Tasks.Task;
 
 namespace RazorMinifier.VSIX

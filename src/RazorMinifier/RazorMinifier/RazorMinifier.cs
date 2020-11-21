@@ -1,4 +1,12 @@
-﻿using DulcisX.Core;
+﻿using System;
+using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
+using System.IO;
+using System.Linq;
+using System.Runtime.InteropServices;
+using System.Threading;
+using System.Threading.Tasks;
+using DulcisX.Core;
 using DulcisX.Core.Enums;
 using DulcisX.Core.Enums.VisualStudio;
 using DulcisX.Nodes;
@@ -10,14 +18,6 @@ using RazorMinifier.Core;
 using RazorMinifier.Core.Minifiers;
 using RazorMinifier.Models;
 using RazorMinifier.Models.Enums;
-using System;
-using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
-using System.IO;
-using System.Linq;
-using System.Runtime.InteropServices;
-using System.Threading;
-using System.Threading.Tasks;
 using Task = System.Threading.Tasks.Task;
 
 namespace RazorMinifier.VSIX
