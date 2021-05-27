@@ -9,6 +9,7 @@ namespace RazorMinifier.Core.Minifiers
 {
     public static class CSHtmlMinifier
     {
+        private static readonly Regex _singleEmptyLineRegex;
         private static readonly Regex _emptyLineRegex;
         private static readonly Regex _multiLineCommentRegex;
         private static readonly Regex _razorSectionRegex;
@@ -16,6 +17,7 @@ namespace RazorMinifier.Core.Minifiers
 
         static CSHtmlMinifier()
         {
+            _singleEmptyLineRegex = new Regex(@"^[\r\n|\n|\s]+", RegexOptions.Multiline);
             _emptyLineRegex = new Regex(@"(^(\s)+|(\s)*(\v|\n|\r))", RegexOptions.Multiline);
             _multiLineCommentRegex = new Regex(@"(<!--(.|\n)*?-->|\/\*(.|\n)*?\*\/|@\*(.|\n)*?\*@)");
             _razorSectionRegex = new Regex(@"@section\s\w+\s?{");
@@ -61,7 +63,16 @@ namespace RazorMinifier.Core.Minifiers
                 }
                 else
                 {
-                    break;
+                    var match = _singleEmptyLineRegex.Match(input);
+
+                    if (match.Success)
+                    {
+                        input = input.Remove(0, match.Length);
+                    }
+                    else
+                    {
+                        break;
+                    }
                 }
             }
 
@@ -95,7 +106,7 @@ namespace RazorMinifier.Core.Minifiers
                 indexOffset += Environment.NewLine.Length;
             }
 
-            foreach (var header in headers)
+            foreach (var header in System.Linq.Enumerable.Reverse(headers))
             {
                 input = string.Concat(header, Environment.NewLine, input);
             }
